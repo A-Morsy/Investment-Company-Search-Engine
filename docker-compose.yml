@@ -1,0 +1,34 @@
+version: '3.8'
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "5000:5000"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=321321
+      - POSTGRES_DB=investment_search
+      - POSTGRES_HOST=db
+    depends_on:
+      - db
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+  db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=321321
+      - POSTGRES_DB=investment_search
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
