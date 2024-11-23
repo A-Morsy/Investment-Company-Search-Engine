@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
 
@@ -8,6 +8,13 @@ interface Company {
   name: string;
   description: string;
   relevance: number;
+}
+
+interface SearchResponse {
+  results: Company[];
+  total_results: number;
+  page: number;
+  per_page: number;
 }
 
 const getRelevanceColor = (relevance: number): string => {
@@ -23,19 +30,46 @@ const CompanySearch = () => {
   const [query, setQuery] = useState('');
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalResults, setTotalResults] = useState(0);
+  const [resultsPerPage] = useState(3);
+
+  useEffect(() => {
+    const cacheKey = `searchResults_${query}_${currentPage}`;
+    const cachedData = localStorage.getItem(cacheKey);
+
+    if (cachedData) {
+      const parsedData = JSON.parse(cachedData);
+      setCompanies(parsedData.companies);
+      setTotalResults(parsedData.totalResults);
+    } else {
+      searchCompanies();
+    }
+  }, [query, currentPage]);
+
 
   const searchCompanies = async () => {
     if (!query.trim()) return;
     setIsLoading(true);
     try {
-      const response = await axios.get(`http://localhost:5000/api/companies/search?q=${query}`);
-      console.log('API Response:', response.data);
-      setCompanies(response.data);
+      const response = await axios.get(
+        `http://localhost:5000/api/companies/search?q=${query}&page=${currentPage}&per_page=${resultsPerPage}`
+      );
+      const { results, total_results } = response.data;
+      setCompanies(results);
+      setTotalResults(total_results);
+
+      const cacheKey = `searchResults_${query}_${currentPage}`;
+      localStorage.setItem(cacheKey, JSON.stringify({ companies: results, totalResults: total_results }));
     } catch (error) {
       console.error('Error:', error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handlePageChange = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
   };
 
   return (
@@ -58,36 +92,45 @@ const CompanySearch = () => {
           {isLoading ? 'Searching...' : 'Search'}
         </button>
       </div>
-      
-      {companies.length === 0 && query ? (
-        <p className="text-gray-500">No companies found</p>
-      ) : (
-        <div className="space-y-4">
-          {companies.map((company) => (
-            <div 
-              key={company.id} 
-              className="bg-white p-4 rounded-lg shadow-sm border hover:shadow-md transition"
-              style={{
-                borderLeft: `4px solid ${getRelevanceColor(company.relevance)}`
-              }}
-            >
-              <h2 className="text-xl font-semibold">{company.name}</h2>
-              <p className="text-gray-600 mt-1">{company.description}</p>
-              <div className="mt-2 flex items-center">
-                <div className="h-2 w-24 bg-gray-200 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-blue-500" 
-                    style={{ width: `${company.relevance * 100}%` }}
-                  />
-                </div>
-                <span className="ml-2 text-sm text-gray-500">
-                  {(company.relevance * 100).toFixed(1)}% match
-                </span>
-              </div>
+
+      {companies.map((company) => (
+        <div
+          key={company.id}
+          className="bg-white p-4 rounded-lg shadow-sm border m-4 hover:shadow-md transition"
+          style={{
+            borderLeft: `4px solid ${getRelevanceColor(company.relevance)}`,
+          }}
+        >
+          <h2 className="text-xl font-semibold">{company.name}</h2>
+          <p className="text-gray-600 mt-1">{company.description}</p>
+          <div className="mt-2 flex items-center">
+            <div className="h-2 w-24 bg-gray-200 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-blue-500"
+                style={{ width: `${company.relevance * 100}%` }}
+              />
             </div>
-          ))}
+            <span className="ml-2 text-sm text-gray-500">
+              {(company.relevance * 100).toFixed(1)}% match
+            </span>
+          </div>
         </div>
-      )}
+      ))}
+
+      {/* Pagination */}
+      <div className="flex justify-center mt-4">
+        {Array.from({ length: Math.ceil(totalResults / resultsPerPage) }, (_, index) => (
+          <button
+            key={index}
+            onClick={() => handlePageChange(index + 1)}
+            className={`mx-1 px-3 py-1 rounded ${
+              currentPage === index + 1 ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-700'
+            }`}
+          >
+            {index + 1}
+          </button>
+        ))}
+      </div>
     </div>
   );
 };

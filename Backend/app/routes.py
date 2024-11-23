@@ -42,7 +42,11 @@ def add_company():
 @main.route('/api/companies/search', methods=['GET'])
 def search_companies():
     try:
-        query = request.args.get('q', '').strip()
+        query = request.args.get('q', '').strip().lower()
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 10))
+
+
         if not query:
             return jsonify({'error': 'Search query required'}), 400
             
@@ -52,16 +56,42 @@ def search_companies():
         
         for company in companies:
             if company.embedding:
+                # Calculate semantic similarity
                 similarity = calculate_similarity(query_embedding, company.embedding)
+                
+                # Calculate name matching bonus
+                company_name_lower = company.name.lower()
+                name_bonus = 0
+                if query == company_name_lower:  # Exact match
+                    name_bonus = 0.5
+                elif query in company_name_lower:  # Partial match
+                    name_bonus = 0.3
+                elif company_name_lower in query:  # Query contains company name
+                    name_bonus = 0.2
+                
+                # Combine scores (semantic similarity + name bonus)
+                final_score = min(1.0, similarity + name_bonus)
+                
                 results.append({
                     'id': company.id,
                     'name': company.name,
                     'description': company.description,
-                    'relevance': round(similarity, 4)
+                    'relevance': round(final_score, 4)
                 })
         
         results.sort(key=lambda x: x['relevance'], reverse=True)
-        return jsonify(results)
+        
+        # Paginate results
+        start_index = (page - 1) * per_page
+        end_index = start_index + per_page
+        paginated_results = results[start_index:end_index]
+        
+        return jsonify({
+            'results': paginated_results,
+            'total_results': len(results),
+            'page': page,
+            'per_page': per_page
+        })
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
