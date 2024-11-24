@@ -10,12 +10,12 @@ interface Company {
   relevance: number;
 }
 
-interface SearchResponse {
-  results: Company[];
-  total_results: number;
-  page: number;
-  per_page: number;
-}
+// interface SearchResponse {
+//   results: Company[];
+//   total_results: number;
+//   page: number;
+//   per_page: number;
+// }
 
 const getRelevanceColor = (relevance: number): string => {
   if (relevance > 0.8) return '#4CAF50';
@@ -35,21 +35,31 @@ const CompanySearch = () => {
   const [resultsPerPage] = useState(3);
 
   useEffect(() => {
+    if (!query.trim()) {
+        setCompanies([]);
+        setTotalResults(0);
+        return;
+    }
+
     const cacheKey = `searchResults_${query}_${currentPage}`;
     const cachedData = localStorage.getItem(cacheKey);
 
     if (cachedData) {
-      const parsedData = JSON.parse(cachedData);
-      setCompanies(parsedData.companies);
-      setTotalResults(parsedData.totalResults);
+        const parsedData = JSON.parse(cachedData);
+        setCompanies(parsedData.companies);
+        setTotalResults(parsedData.totalResults);
     } else {
-      searchCompanies();
+        searchCompanies();
     }
-  }, [query, currentPage]);
+}, [query, currentPage]);
 
 
   const searchCompanies = async () => {
-    if (!query.trim()) return;
+    if (!query.trim()) {
+        setCompanies([]);  // Clear results
+        setTotalResults(0);
+        return;
+    }
     setIsLoading(true);
     try {
       const response = await axios.get(
