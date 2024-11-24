@@ -56,14 +56,13 @@ def search_companies():
        if not query:
            return jsonify({'error': 'Search query required'}), 400
            
-       # Create embedding from lowercase query
        query_embedding = model.encode(query).tolist()
        companies = Company.query.all()
        results = []
        
        for company in companies:
            if company.embedding:
-               similarity = calculate_similarity(query_embedding, company.embedding)
+               similarity = max(0, calculate_similarity(query_embedding, company.embedding))
                
                company_name_lower = company.name.lower()
                name_bonus = 0
@@ -74,20 +73,21 @@ def search_companies():
                elif company_name_lower in query:
                    name_bonus = 0.2
                
-               # Check description match in lowercase
                desc_lower = company.description.lower()
                desc_bonus = 0
                if query in desc_lower:
                    desc_bonus = 0.1
                
-               final_score = min(1.0, similarity + name_bonus + desc_bonus)
+               final_score = max(0, min(1.0, similarity + name_bonus + desc_bonus))
                
-               results.append({
-                   'id': company.id,
-                   'name': company.name,
-                   'description': company.description,
-                   'relevance': round(final_score, 4)
-               })
+               # Only include results with relevance >= 0.1 (10%)
+               if final_score >= 0.05:
+                   results.append({
+                       'id': company.id,
+                       'name': company.name,
+                       'description': company.description,
+                       'relevance': round(final_score, 4)
+                   })
        
        results.sort(key=lambda x: x['relevance'], reverse=True)
        
@@ -105,6 +105,7 @@ def search_companies():
    except Exception as e:
        print("Search error:", str(e))
        return jsonify({'error': str(e)}), 500
+   
 def calculate_similarity(embedding1, embedding2):
 
    embedding1 = np.array(embedding1)
