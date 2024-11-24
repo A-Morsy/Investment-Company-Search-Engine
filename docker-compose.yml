@@ -8,6 +8,8 @@ services:
       - POSTGRES_PASSWORD=321321
       - POSTGRES_DB=investment_search
       - POSTGRES_HOST=db
+    volumes:
+      - ./backend:/app
     depends_on:
       - db
     restart: always
@@ -16,6 +18,11 @@ services:
     build: ./frontend
     ports:
       - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
       - backend
     restart: always

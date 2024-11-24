@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from .models import db, Company
+from flask_cors import cross_origin
 from sentence_transformers import SentenceTransformer
 import numpy as np
 from numpy.linalg import norm
@@ -12,10 +13,12 @@ main = Blueprint('main', __name__)
 model = SentenceTransformer('all-MiniLM-L6-v2')
 
 @main.route('/api/companies', methods=['POST'])
+@cross_origin()
 def add_company():
     try:
         data = request.get_json()
-        
+        print("Received data:", data)
+
         # Validate required fields
         if not data or 'name' not in data or 'description' not in data:
             return jsonify({'error': 'Name and description are required'}), 400
@@ -37,9 +40,15 @@ def add_company():
         return jsonify({'message': 'Company added successfully', 'id': company.id}), 201
         
     except Exception as e:
+        print("Error:", str(e))  # Debug log
         db.session.rollback()
         return jsonify({'error': str(e)}), 400
+    
+
+
+
 @main.route('/api/companies/search', methods=['GET'])
+@cross_origin()
 def search_companies():
     try:
         query = request.args.get('q', '').strip().lower()

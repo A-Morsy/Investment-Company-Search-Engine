@@ -11,21 +11,28 @@ const AddCompany: React.FC<AddCompanyProps> = ({ onCompanyAdded }) => {
  const [isLoading, setIsLoading] = useState(false);
  const [error, setError] = useState('');
 
- const handleSubmit = async (e: React.FormEvent) => {
-   e.preventDefault();
-   setIsLoading(true);
-   setError('');
 
-   try {
-     await axios.post('http://localhost:5000/api/companies', formData);
-     setFormData({ name: '', description: '' });
-     onCompanyAdded?.();
-   } catch (err: any) {
-     setError(err.response?.data?.error || 'Failed to add company');
-   } finally {
-     setIsLoading(false);
-   }
- };
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError('');
+
+  try {
+    const response = await axios.post('http://localhost:5000/api/companies', formData, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    console.log('Response:', response.data);  // Debug log
+    setFormData({ name: '', description: '' });
+    onCompanyAdded?.();
+  } catch (err: any) {
+    console.error('Error:', err);  // Debug log
+    setError(err.response?.data?.error || 'Failed to add company');
+  } finally {
+    setIsLoading(false);
+  }
+};
 
  return (
    <div className="max-w-4xl mx-auto p-4">

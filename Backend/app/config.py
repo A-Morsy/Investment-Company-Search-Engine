@@ -1,4 +1,8 @@
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 class Config:
     POSTGRES_USER = os.getenv('POSTGRES_USER', 'postgres')
