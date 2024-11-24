@@ -61,3 +61,76 @@ After starting the containers:
        -H "Content-Type: application/json" \
        -d '{"name":"Test Company","description":"A test company"}'
      ```
+
+
+## OpenShift Deployment
+
+1. Login to OpenShift:
+```bash
+oc login <cluster-url>
+```
+
+2.Create new project:
+```bash
+oc new-project investment-search
+```
+
+3.Create database secrets:
+```bash
+oc create secret generic db-secrets \
+  --from-literal=username=postgres \
+  --from-literal=password=321321
+```
+
+4.Deploy PostgreSQL:
+```bash
+oc new-app postgresql-persistent \
+  --param POSTGRESQL_USER=postgres \
+  --param POSTGRESQL_PASSWORD=321321 \
+  --param POSTGRESQL_DATABASE=investment_search
+```
+
+5.Deploy backend:
+```bash
+oc apply -f backend/openshift/deployment.yaml
+oc apply -f backend/openshift/service.yaml
+oc apply -f backend/openshift/route.yaml
+```
+
+6.Deploy frontend:
+```bash
+oc apply -f frontend/openshift/deployment.yaml
+oc apply -f frontend/openshift/service.yaml
+oc apply -f frontend/openshift/route.yaml
+```
+
+7.Get and configure routes:
+```bash
+# Get the backend route URL
+oc get route investment-search-backend -o jsonpath='{.spec.host}'
+
+# Update frontend config with backend URL
+# Edit frontend/openshift/deployment.yaml and add:
+    env:
+    - name: REACT_APP_API_URL
+      value: 'http://<backend-route-url>'  # URL from previous command
+
+# Apply the updated frontend deployment
+oc apply -f frontend/openshift/deployment.yaml
+```
+
+8.Verify deployment:
+```bash
+# Get all routes
+oc get routes
+
+# You should see both frontend and backend URLs
+```
+
+
+## Very Important :
+
+1. You first need to deploy everything
+2. Get the backend route URL using OpenShift CLI
+3. Update the frontend deployment with the actual backend URL
+4. Redeploy the frontend to apply the changes

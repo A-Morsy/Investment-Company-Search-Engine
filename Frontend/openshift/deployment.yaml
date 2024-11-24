@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: investment-search-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: investment-search-frontend
+  template:
+    metadata:
+      labels:
+        app: investment-search-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: investment-search-frontend:latest
+          ports:
+            - containerPort: 3000

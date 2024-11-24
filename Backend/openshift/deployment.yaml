@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: investment-search-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: investment-search-backend
+  template:
+    metadata:
+      labels:
+        app: investment-search-backend
+    spec:
+      containers:
+        - name: backend
+          image: investment-search-backend:latest
+          ports:
+            - containerPort: 5000
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: username
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-secrets
+                  key: password
+            - name: POSTGRES_DB
+              value: investment_search
