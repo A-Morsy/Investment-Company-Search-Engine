@@ -40,7 +40,7 @@ A web application that ranks companies based on search relevance using Natural L
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/yourusername/Investment-Company-Search-Engine.git
+git clone https://github.com/A-Morsy/Investment-Company-Search-Engine.git
 cd Investment-Company-Search-Engine
 ```
 
