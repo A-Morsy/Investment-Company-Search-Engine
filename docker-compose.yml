@@ -1,6 +1,6 @@
 services:
   backend:
-    build: ./backend
+    build: ./Backend
     ports:
       - "5000:5000"
     environment:
@@ -9,17 +9,17 @@ services:
       - POSTGRES_DB=investment_search
       - POSTGRES_HOST=db
     volumes:
-      - ./backend:/app
+      - ./Backend:/app
     depends_on:
       - db
     restart: always
 
   frontend:
-    build: ./frontend
+    build: ./Frontend
     ports:
       - "3000:3000"
     volumes:
-      - ./frontend:/app
+      - ./Frontend:/app
       - /app/node_modules
     environment:
       - CHOKIDAR_USEPOLLING=true
